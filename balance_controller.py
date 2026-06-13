@@ -1,7 +1,5 @@
 """
-轮腿平衡控制器 — phi 空间接口
-==============================
-外部只设 phi1 / phi4 目标角，内部自动转换 raw joint 发给 MuJoCo。
+开环力矩测试 — 只给 rear joint (phi1) 恒力矩, 观察 phi1 变化
 """
 
 import mujoco as mj
@@ -15,14 +13,10 @@ XML_PATH = "COD-2026RoboMaster-Balance copy.xml"
 model = mj.MjModel.from_xml_path(XML_PATH)
 data = mj.MjData(model)
 
-# ======================== 输入: phi 目标角 ========================
-PHI1_TARGET = math.radians(170)   # rear  连杆角
-PHI4_TARGET = math.radians(10)    # front 连杆角
-
-# ======================== PD 增益 ========================
-KP = 100.0
-KD = 1.0
-TORQUE_LIMIT = 3.14
+# ======================== 测试参数 ========================
+TEST_FRONT_TORQUE = 0   # 开环力矩 [Nm], 正值, 只发 front joint
+PHI1_START = math.radians(170)   # 初始 rear 角
+PHI4_START = math.radians(10)    # 初始 front 角 (仅初始位置, 不控)
 
 # ======================== phi ↔ raw joint ========================
 # 轴: Right rear=0 -1 0 front=0  1 0  |  Left rear=0  1 0 front=0 -1 0
@@ -58,43 +52,34 @@ for side in ["Right", "Left"]:
         jid = jnt_id(f"{side}_{k}_joint")
         joint_addr[side][k] = {"qpos": model.jnt_qposadr[jid], "dof": model.jnt_dofadr[jid]}
 
-# ======================== 目标 raw 角 ========================
-q_target = {}
-q_target["Right", "rear"],  q_target["Right", "front"]  = phi_to_q("Right", PHI1_TARGET, PHI4_TARGET)
-q_target["Left",  "rear"],  q_target["Left",  "front"]  = phi_to_q("Left",  PHI1_TARGET, PHI4_TARGET)
-
 # ======================== 主循环 ========================
 def main():
+    q_hip_R, q_sho_R = phi_to_q("Right", PHI1_START, PHI4_START)
+    q_hip_L, q_sho_L = phi_to_q("Left",  PHI1_START, PHI4_START)
+
     print("=" * 50)
-    print(f"  phi1={math.degrees(PHI1_TARGET):.0f}°  phi4={math.degrees(PHI4_TARGET):.0f}°")
-    print(f"  R: rear={math.degrees(q_target['Right','rear']):+.0f}°  front={math.degrees(q_target['Right','front']):+.0f}°")
-    print(f"  L: rear={math.degrees(q_target['Left','rear']):+.0f}°  front={math.degrees(q_target['Left','front']):+.0f}°")
+    print(f"  开环 front 力矩测试: {TEST_FRONT_TORQUE:+.1f} Nm")
+    print(f"  初始 phi1={math.degrees(PHI1_START):.0f}°  phi4={math.degrees(PHI4_START):.0f}°")
+    print(f"  R rear raw={math.degrees(q_hip_R):+.0f}°  L rear raw={math.degrees(q_hip_L):+.0f}°")
     print("=" * 50)
 
-    # 初始化为目标角
-    for (side, jn), qref in q_target.items():
-        data.qpos[joint_addr[side][jn]["qpos"]] = qref
+    # 初始化为起始角
+    data.qpos[joint_addr["Right"]["rear"]["qpos"]]  = q_hip_R
+    data.qpos[joint_addr["Right"]["front"]["qpos"]] = q_sho_R
+    data.qpos[joint_addr["Left"]["rear"]["qpos"]]   = q_hip_L
+    data.qpos[joint_addr["Left"]["front"]["qpos"]]  = q_sho_L
     mj.mj_forward(model, data)
 
     last_print = time.time()
 
     with mujoco.viewer.launch_passive(model, data) as viewer:
         while viewer.is_running():
-            # 轮子置零
-            data.ctrl[ACT_IDS[2]] = 0.0
-            data.ctrl[ACT_IDS[5]] = 0.0
+            # 所有置零
+            data.ctrl[:] = 0.0
 
-            # PD 控制 hip + front
-            for side in ["Right", "Left"]:
-                for jn in ["rear", "front"]:
-                    adr = joint_addr[side][jn]
-                    q  = data.qpos[adr["qpos"]]
-                    qd = data.qvel[adr["dof"]]
-                    idx = 1 if (side == "Right" and jn == "rear") else \
-                          0 if (side == "Right" and jn == "front") else \
-                          4 if (side == "Left"  and jn == "rear") else 3
-                    tau = KP * (q_target[side, jn] - q) + KD * (0.0 - qd)
-                    data.ctrl[ACT_IDS[idx]] = np.clip(tau, -TORQUE_LIMIT, TORQUE_LIMIT)
+            # 只给 front joint 开环力矩 (右前反)
+            data.ctrl[ACT_IDS[0]] = -TEST_FRONT_TORQUE   # Right_front (反)
+            data.ctrl[ACT_IDS[3]] =  TEST_FRONT_TORQUE   # Left_front
 
             mj.mj_step(model, data)
             viewer.sync()
