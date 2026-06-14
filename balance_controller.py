@@ -1,7 +1,8 @@
 """
-轮腿平衡控制器 — 腿长输入 + IK + PD
-====================================
+轮腿平衡控制器 — 腿长输入 + IK + PD + IMU
+==========================================
 引用 robot_config.py 的参数、运动学和 MuJoCo 初始化。
+机体 freejoint 浮空，IMU 实时读取 pitch。
 """
 
 import mujoco as mj
@@ -11,17 +12,21 @@ import math
 import mujoco.viewer
 from robot_config import (
     init_model, fk, ik, phi_to_q, q_to_phi,
+    get_pitch, get_pitch_dot,
 )
 
 # ======================== 输入: 目标腿长 ========================
 LEG_LENGTH_REF = 0.30      # 目标等效腿长 [m]
+
+# ======================== 轮子力矩测试 ========================
+TEST_WHEEL_TORQUE = 1.0     # !=0 时开环测试轮子, =0 时正常模式
 
 # ======================== PD 增益 ========================
 KP = 300.0; KD = 3.0; TORQUE_LIMIT = 3.14
 
 # ======================== 初始化 MuJoCo ========================
 XML_PATH = "COD-2026RoboMaster-Balance copy.xml"
-model, data, act_ids, act_idx, joint_addr = init_model(XML_PATH)
+model, data, act_ids, act_idx, joint_addr, freejoint_adr = init_model(XML_PATH)
 
 # ======================== 主循环 ========================
 def main():
@@ -33,8 +38,9 @@ def main():
     q_tgt["Right","rear"],  q_tgt["Right","front"] = phi_to_q("Right", phi1_ref, phi4_ref)
     q_tgt["Left", "rear"],  q_tgt["Left", "front"] = phi_to_q("Left",  phi1_ref, phi4_ref)
 
+    mode = f"开环轮子={TEST_WHEEL_TORQUE:+.1f}Nm" if TEST_WHEEL_TORQUE != 0 else "PD"
     print("=" * 55)
-    print(f"  L_ref = {LEG_LENGTH_REF:.3f}m")
+    print(f"  [{mode}]  L_ref = {LEG_LENGTH_REF:.3f}m")
     print(f"  IK → phi1 = {math.degrees(phi1_ref):.1f}°  phi4 = {math.degrees(phi4_ref):.1f}°")
     for side in ["Right","Left"]:
         print(f"  [{side}] raw rear = {math.degrees(q_tgt[side,'rear']):+.0f}°  "
@@ -50,9 +56,17 @@ def main():
     # --- Viewer ---
     with mujoco.viewer.launch_passive(model, data) as viewer:
         while viewer.is_running():
-            # 轮子置零
-            data.ctrl[act_ids[2]] = 0.0
-            data.ctrl[act_ids[5]] = 0.0
+            # 轮子 (测试 or 置零, 右手定则: 外侧看CCW为正)
+            if TEST_WHEEL_TORQUE != 0:
+                data.ctrl[act_ids[2]] = -TEST_WHEEL_TORQUE   # Right wheel (反)
+                data.ctrl[act_ids[5]] =  TEST_WHEEL_TORQUE   # Left wheel
+            else:
+                data.ctrl[act_ids[2]] = 0.0
+                data.ctrl[act_ids[5]] = 0.0
+
+            # IMU 读 pitch (从 freejoint)
+            pitch     = get_pitch(data, freejoint_adr)
+            pitch_dot = get_pitch_dot(data, freejoint_adr)
 
             # PD 角度控制 (raw 空间)
             for side in ["Right","Left"]:
@@ -70,7 +84,7 @@ def main():
             # 每秒打印
             now = time.time()
             if now - last_print >= 1.0:
-                print(f"[t={data.time:.1f}s]")
+                print(f"[t={data.time:.1f}s] pitch={math.degrees(pitch):.1f}°")
                 for side in ["Right","Left"]:
                     qr = data.qpos[joint_addr[side]["rear"]["qpos"]]
                     qf = data.qpos[joint_addr[side]["front"]["qpos"]]

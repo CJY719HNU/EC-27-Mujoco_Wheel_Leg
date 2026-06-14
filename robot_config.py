@@ -167,4 +167,23 @@ def init_model(xml_path):
                 "dof":  model.jnt_dofadr[jid],
             }
 
-    return model, data, act_ids, act_idx, joint_addr
+    # freejoint qpos 起始地址 (用于读 pitch)
+    freejoint_id = _id(mj.mjtObj.mjOBJ_JOINT, "base_freejoint")
+    freejoint_adr = model.jnt_qposadr[freejoint_id]
+
+    return model, data, act_ids, act_idx, joint_addr, freejoint_adr
+
+
+# ======================== IMU 读取 (从 freejoint 四元数) ========================
+
+def get_pitch(data, freejoint_adr):
+    """从 freejoint 四元数提取 pitch [rad]"""
+    a = freejoint_adr
+    w, x, y, z = data.qpos[a+3 : a+7]
+    sp = max(-1.0, min(1.0, 2.0 * (w * y - z * x)))
+    return math.asin(sp)
+
+def get_pitch_dot(data, freejoint_adr):
+    """从 freejoint 角速度读取 pitch 角速度 [rad/s]"""
+    a = freejoint_adr
+    return data.qvel[a+3 : a+6][1]  # y 轴 = pitch rate
