@@ -9,8 +9,8 @@ import numpy as np
 import mujoco as mj
 
 # ======================== 五杆机构参数 ========================
-L_ACT = 0.21               # 主动连杆长度 (rear_link / front_link) [m]
-L_SLV = 0.25               # 从动连杆长度 (rear_child1 / front_child1+2+3) [m]
+L_ACT = 0.215               # 主动连杆长度 (rear_link / front_link) [m]
+L_SLV = 0.251               # 从动连杆长度 (rear_child1 / front_child1+2+3) [m]
 L5    = 0.0                # 髋/肩关节水平间距 [m]
 M     = 15.040             # 机体质量 [kg]
 G     = 9.81               # 重力加速度 [m/s²]
@@ -276,3 +276,14 @@ def get_acc(data, freejoint_adr):
     """从 freejoint 加速度读取机体加速度 [m/s²]"""
     a = freejoint_adr
     return data.qacc[a : a+3]  # ax, ay, az
+
+def get_yaw(data, freejoint_adr):
+    """从 freejoint 四元数提取 yaw [rad]"""
+    a = freejoint_adr
+    w, x, y, z = data.qpos[a+3 : a+7]
+    return math.atan2(2.0*(w*z + x*y), 1.0 - 2.0*(y*y + z*z))
+
+def get_yaw_dot(data, freejoint_adr):
+    """从 freejoint 角速度读取 yaw 角速度 [rad/s]"""
+    a = freejoint_adr
+    return data.qvel[a+5]  # z 轴 = yaw rate

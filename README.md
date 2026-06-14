@@ -1,12 +1,12 @@
 王草凡的模型左右腿命名反了,以下统一称真正的左右腿
 
 连杆长度质量对照：
-front_link->大腿2：0.1134kg，0.073kg
-front_child1_link->大腿连杆：0.135m，0.029kg
-front_child2_link->大腿连杆2：0.202m，0.0486kg
-front_child3_link->大腿连杆3：0.0966m，0.020187kg
-rear_link->新大腿：0.21m，0.335kg
-rear_child1_link->大腿连杆4：0.26m，0.251kg
+front_link->大腿2：0.1134m，0.073kg 0.10m
+front_child1_link->大腿连杆：0.135m，0.029kg 0.118m(实际)
+front_child2_link->大腿连杆2：0.202m，0.0486kg 0.1755m(实际)
+front_child3_link->大腿连杆3：0.0966m，0.020187kg 0.115m(实际)
+rear_link->新大腿：0.21m，0.335kg 0.215m(实际)
+rear_child1_link->大腿连杆4：0.26m，0.251kg 0.254m(实际)
 wheel_link->轮子：0.077m半径，0.36kg
 
 simulink仿真统一右手螺旋定则，故在xml控制需统一极性方向
