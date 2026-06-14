@@ -171,7 +171,58 @@ def init_model(xml_path):
     freejoint_id = _id(mj.mjtObj.mjOBJ_JOINT, "base_freejoint")
     freejoint_adr = model.jnt_qposadr[freejoint_id]
 
-    return model, data, act_ids, act_idx, joint_addr, freejoint_adr
+    # 轮子 body ID (用于离地检测)
+    wheel_body = {
+        "Right": _id(mj.mjtObj.mjOBJ_BODY, "Right_Wheel_link"),
+        "Left":  _id(mj.mjtObj.mjOBJ_BODY, "Left_Wheel_link"),
+    }
+
+    return model, data, act_ids, act_idx, joint_addr, freejoint_adr, wheel_body
+
+
+# ======================== K 矩阵 (变腿长 LQR) ========================
+# usebodyvel.m 以等效腿长 L ∈ [0.20, 0.39]m 离散化 → 二次多项式拟合
+# 每行 [p1, p2, p3]: K_i(L) = p1*L² + p2*L + p3
+# 行 1~6  → 轮子力矩 T_wheel, 行 7~12 → 虚拟腿力矩 T_Leg
+
+K_CONS = np.array([
+    [ 45.778283,  -45.778071,   -9.396343],   # K1  theta     → T_wheel
+    [  1.756041,   -2.338764,   -0.550447],   # K2  theta_dot → T_wheel
+    [ 10.523162,   -8.954049,   -2.780402],   # K3  x         → T_wheel
+    [ 10.678620,   -9.305726,   -3.198268],   # K4  x_dot     → T_wheel
+    [ 69.592610,  -70.679983,   23.123773],   # K5  pitch     → T_wheel
+    [  5.831394,   -6.022073,    2.078401],   # K6  pitch_dot → T_wheel
+    [ 31.186652,  -37.751178,   14.599865],   # K7  theta     → T_Leg
+    [  3.619870,   -3.816698,    1.346905],   # K8  theta_dot → T_Leg
+    [ 20.883169,  -22.162118,    7.687936],   # K9  x         → T_Leg
+    [ 23.518776,  -24.661049,    8.447341],   # K10 x_dot     → T_Leg
+    [-80.560280,   67.814941,   38.985001],   # K11 pitch     → T_Leg
+    [ -5.929814,    5.034073,    2.692640],   # K12 pitch_dot → T_Leg
+])
+
+
+def get_kk(L):
+    """等效腿长 L → 12 维 K 向量: kk = K_CONS @ [L², L, 1]ᵀ"""
+    ll = np.array([L**2, L, 1.0])
+    return K_CONS @ ll
+
+
+def get_k_mat(L, grounded=True):
+    """
+    2×6 K 矩阵:  [T_wheel, T_Leg]ᵀ = K_mat @ X_err
+    X_err = [theta, theta_dot, x, x_dot, pitch, pitch_dot]ᵀ (ref - actual)
+    """
+    kk = get_kk(L)
+    if grounded:
+        return np.array([
+            [kk[0], kk[1], kk[2], kk[3], kk[4], kk[5]],
+            [kk[6], kk[7], kk[8], kk[9], kk[10], kk[11]],
+        ])
+    else:  # 离地 → 仅腿长方向
+        return np.array([
+            [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+            [kk[6], kk[7], 0.0, 0.0, 0.0, 0.0],
+        ])
 
 
 # ======================== IMU 读取 (从 freejoint 四元数) ========================
@@ -187,3 +238,8 @@ def get_pitch_dot(data, freejoint_adr):
     """从 freejoint 角速度读取 pitch 角速度 [rad/s]"""
     a = freejoint_adr
     return data.qvel[a+3 : a+6][1]  # y 轴 = pitch rate
+
+def get_acc(data, freejoint_adr):
+    """从 freejoint 加速度读取机体加速度 [m/s²]"""
+    a = freejoint_adr
+    return data.qacc[a : a+3]  # ax, ay, az
