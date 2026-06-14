@@ -1,0 +1,27 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build controller",
+            "type": "shell",
+            "command": "D:/Toolchain/mingw64/bin/gcc",
+            "args": [
+                "-O2",
+                "-g",
+                "${workspaceFolder}/balance_controller.c",
+                "-o", "${workspaceFolder}/controller.exe",
+                "-I", "C:/Users/Administrator/AppData/Local/Programs/Python/Python314/Lib/site-packages/mujoco/include",
+                "-L", "D:/Software/Mujoco/lib",
+                "-lmujoco",
+                "-D_USE_MATH_DEFINES",
+                "-std=c11"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"],
+            "detail": "MinGW compile MuJoCo C controller"
+        }
+    ]
+}

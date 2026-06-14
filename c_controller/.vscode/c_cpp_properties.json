@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "MinGW",
+            "includePath": [
+                "${workspaceFolder}",
+                "C:/Users/Administrator/AppData/Local/Programs/Python/Python314/Lib/site-packages/mujoco/include",
+                "D:/Toolchain/mingw64/include",
+                "D:/Toolchain/mingw64/x86_64-w64-mingw32/include"
+            ],
+            "defines": ["_USE_MATH_DEFINES"],
+            "compilerPath": "D:/Toolchain/mingw64/bin/gcc.exe",
+            "cStandard": "c11",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
+}
