@@ -12,7 +12,7 @@ from robot_config import (
 model, data, act_ids, act_idx, joint_addr, freejoint_adr, _ = \
     init_model("COD-2026RoboMaster-Balance copy.xml")
 
-L_REF = 0.20; KP_L=300.0; KD_L=100.0; KP_T=6.0; KD_T=0.2; TLIM=100.0
+L_REF = 0.20; KP_L=300.0; KD_L=100.0; KP_T=12.0; KD_T=0.2; TLIM=100.0
 WP = (1, -1)  # wheel_pol R,L
 VS = ((1,-1),(-1,1))  # VMC_SIGN R,L
 
@@ -53,8 +53,9 @@ def main():
                 ld.FN=MW*yMdd+FL*math.cos(th)+MW*G; ld.g=ld.FN>=20.0
                 if not ld.g: ld.x0=qw
                 K=lookup_k_mat(L,ld.g)
-                u=-K@np.array([th,thd,ld.x,xd,pitch,pitch_d])
-                TL=u[1]+(KP_T*(Rl.th-Ll.th)+KD_T*(Rl.td-Ll.td))*(1 if side=="Right" else -1)
+                u=-K@np.array([th,thd,-ld.x,xd,-pitch,-pitch_d])
+                #这是
+                TL=u[1] #+(KP_T*(Rl.th-Ll.th)+KD_T*(Rl.td-Ll.td))*(-1 if side=="Right" else -1)
                 J=vmc_jacobian(p1,p2,p3,p4,p5,L); Tj=J@[FL,TL]
                 Tr=rs*(-Tj[0]); Tf=fs*(-Tj[1]); Tw=wp*u[0]
                 data.ctrl[act_ids[act_idx[side,"rear"]]]  = np.clip(Tr,-TLIM,TLIM)
@@ -65,7 +66,7 @@ def main():
             mj.mj_step(model, data); v.sync(); time.sleep(0.001)
             now=time.time()
             if now-lp>=1.0:
-                print(f"[t={data.time:.1f}s] pitch={math.degrees(pitch):.1f}  FN_R={Rl.FN:.0f}N FN_L={Ll.FN:.0f}N")
+                print(f"[t={data.time:.1f}s] pitch={math.degrees(pitch):.1f}  FN_R={Rl.FN:.0f}N FN_L={Ll.FN:.0f}N  x_R={Rl.x:.3f} x_L={Ll.x:.3f}")
                 lp=now
 
 if __name__=="__main__": main()

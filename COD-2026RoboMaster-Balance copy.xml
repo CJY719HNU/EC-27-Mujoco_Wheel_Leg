@@ -35,7 +35,7 @@
           contype="1" conaffinity="1" condim="3" friction="0.8 0.1 0.1"/>
 
     <!-- 机体/基座 / Chassis (Floating Base) -->
-    <body name="base_link" pos="0 0 1">
+    <body name="base_link" pos="0 0 0.4">
       <inertial pos="0 0 0" mass="15.040" diaginertia="0.048 0.061 0.094" />
       <freejoint name="base_freejoint" />
       <geom type="mesh" rgba="1 1 1 1" mesh="base_link" />
