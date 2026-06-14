@@ -35,7 +35,7 @@
           contype="1" conaffinity="1" condim="3" friction="0.8 0.1 0.1"/>
 
     <!-- 机体/基座 / Chassis (Floating Base) -->
-    <body name="base_link" pos="0 0 0.4">
+    <body name="base_link" pos="0 0 1">
       <inertial pos="0 0 0" mass="15.040" diaginertia="0.048 0.061 0.094" />
       <freejoint name="base_freejoint" />
       <geom type="mesh" rgba="1 1 1 1" mesh="base_link" />
@@ -165,12 +165,12 @@
     </equality>
 
   <actuator>
-    <general name="Right_front_joint_actuator" joint="Right_front_joint" gainprm="1" ctrlrange="-3.14 3.14" />
-    <general name="Right_rear_joint_actuator" joint="Right_rear_joint" gainprm="1" ctrlrange="-3.14 3.14" />
-    <general name="Right_Wheel_joint_actuator" joint="Right_Wheel_joint" gainprm="1" />
-    <general name="Left_front_joint_actuator" joint="Left_front_joint" gainprm="1" ctrlrange="-3.14 3.14" />
-    <general name="Left_rear_joint_actuator" joint="Left_rear_joint" gainprm="1" ctrlrange="-3.14 3.14" />
-    <general name="Left_Wheel_joint_actuator" joint="Left_Wheel_joint" gainprm="1" />
+    <general name="Right_front_joint_actuator" joint="Right_front_joint" gainprm="1" ctrlrange="-20 20" />
+    <general name="Right_rear_joint_actuator" joint="Right_rear_joint" gainprm="1" ctrlrange="-20 20" />
+    <general name="Right_Wheel_joint_actuator" joint="Right_Wheel_joint" gainprm="1" ctrlrange="-100 100" />
+    <general name="Left_front_joint_actuator" joint="Left_front_joint" gainprm="1" ctrlrange="-20 20" />
+    <general name="Left_rear_joint_actuator" joint="Left_rear_joint" gainprm="1" ctrlrange="-20 20" />
+    <general name="Left_Wheel_joint_actuator" joint="Left_Wheel_joint" gainprm="1" ctrlrange="-100 100" />
   </actuator>
   <keyframe>
     <key name="home" qpos="0 0 0 1 0 0 0 0.7854 0 0 0 -0.7854 0 0 0.7854 0 0 0 -0.7854 0 0" />

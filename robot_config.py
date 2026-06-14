@@ -210,7 +210,6 @@ def get_kk(L):
 def get_k_mat(L, grounded=True):
     """
     2×6 K 矩阵:  [T_wheel, T_Leg]ᵀ = K_mat @ X_err
-    X_err = [theta, theta_dot, x, x_dot, pitch, pitch_dot]ᵀ (ref - actual)
     """
     kk = get_kk(L)
     if grounded:
@@ -218,11 +217,45 @@ def get_k_mat(L, grounded=True):
             [kk[0], kk[1], kk[2], kk[3], kk[4], kk[5]],
             [kk[6], kk[7], kk[8], kk[9], kk[10], kk[11]],
         ])
-    else:  # 离地 → 仅腿长方向
+    else:
         return np.array([
             [0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
             [kk[6], kk[7], 0.0, 0.0, 0.0, 0.0],
         ])
+
+# ======================== K 值预查表 ========================
+_K_TABLE = {}   # {L_bin: (K_mat_grounded, K_mat_airborne)}
+
+def build_k_table(L_min=0.08, L_max=0.45, step=0.002):
+    """预计算 K 表, 步长 2mm"""
+    global _K_TABLE
+    _K_TABLE.clear()
+    L = L_min
+    while L <= L_max + step/2:
+        key = round(L, 4)
+        kk = get_kk(L)
+        _K_TABLE[key] = (
+            np.array([[kk[0],kk[1],kk[2],kk[3],kk[4],kk[5]],
+                      [kk[6],kk[7],kk[8],kk[9],kk[10],kk[11]]]),
+            np.array([[0.0,0.0,0.0,0.0,0.0,0.0],
+                      [kk[6],kk[7],0.0,0.0,0.0,0.0]]),
+        )
+        L += step
+    print(f"K table built: {len(_K_TABLE)} entries, L=[{L_min:.2f}, {L_max:.2f}]")
+
+def lookup_k_mat(L, grounded=True):
+    """查表取 K, 最近邻"""
+    if not _K_TABLE:
+        build_k_table()
+    key = round(L, 4)
+    if key in _K_TABLE:
+        g, a = _K_TABLE[key]
+        return g if grounded else a
+    # fallback: 最近邻
+    keys = sorted(_K_TABLE.keys())
+    nearest = min(keys, key=lambda k: abs(k - L))
+    g, a = _K_TABLE[nearest]
+    return g if grounded else a
 
 
 # ======================== IMU 读取 (从 freejoint 四元数) ========================
