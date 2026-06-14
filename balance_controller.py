@@ -25,12 +25,12 @@ model, data, act_ids, act_idx, joint_addr, freejoint_adr, wheel_body = init_mode
 LEG_LENGTH_REF = 0.30
 
 # ======================== 增益 ========================
-KP_LEG    = 3000.0; KD_LEG    = 600.0   # 腿长 PD (变腿长, 提高响应)
+KP_LEG    = 1200.0; KD_LEG    = 300.0   # 腿长 PD (变腿长, 提高响应)
 KP_THETA  = 6.0;    KD_THETA  = 0.2     # 抗劈叉 (leg_fun.m)
 TORQUE_LIMIT = 3.14
 
 # ======================== 轮子极性 ========================
-WHEEL_POL = {"Right": -1, "Left": 1}
+WHEEL_POL = {"Right": 1, "Left": -1}
 
 # ======================== 轮子积分 ========================
 class LegData:
@@ -137,7 +137,7 @@ def main():
                 Tj  = J @ np.array([F_Leg, T_Leg])
                 T_rear_raw  = rs * (-Tj[0])
                 T_front_raw = fs * (-Tj[1])
-                T_wheel = WHEEL_POL[side] * T_wheel_raw * 3
+                T_wheel = WHEEL_POL[side] * T_wheel_raw * 0.9
 
                 # FN
                 acc = get_acc(data, freejoint_adr)
