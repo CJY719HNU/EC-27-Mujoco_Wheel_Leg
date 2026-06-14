@@ -36,7 +36,7 @@
 
     <!-- 机体/基座 / Chassis (Floating Base) -->
     <body name="base_link" pos="0 0 1">
-      <inertial pos="0 0 0" mass="15.040" diaginertia="0.048 0.061 0.094" />
+      <inertial pos="0 0 0" mass="11.930" diaginertia="0.048 0.061 0.094" />
       <freejoint name="base_freejoint" />
       <geom type="mesh" rgba="1 1 1 1" mesh="base_link" />
     
@@ -88,7 +88,7 @@
 
         <!-- 左后腿·轮子 / Right Rear Leg · Wheel -->
         <body name="Right_Wheel_link" pos="0.208983 -0.02455 -0.144368">
-          <inertial pos="0.00015229 -0.0099965 -0.00013677" quat="0.583036 0.400153 0.400171 0.582932" mass="0.36" diaginertia="0.00043712 0.000230405 0.000228895" />
+          <inertial pos="0.00015229 -0.0099965 -0.00013677" quat="0.583036 0.400153 0.400171 0.582932" mass="0.218" diaginertia="0.00043712 0.000230405 0.000228895" />
           <joint name="Right_Wheel_joint" pos="0 0 0" axis="0 1 0" damping="0.01" />
           <geom type="mesh" rgba="0.79216 0.81961 0.93333 1" mesh="Right_Wheel_link"
                 conaffinity="1" condim="3" friction="0.8 0.1 0.1"/>
@@ -145,7 +145,7 @@
 
         <!-- 右后腿·轮子 / Left Rear Leg · Wheel -->
         <body name="Left_Wheel_link" pos="0.202605 0.02455 -0.15319">
-          <inertial pos="0.00017762 0.0099965 -0.00010174" quat="0.706853 0.0171001 0.0170535 0.706948" mass="0.36" diaginertia="0.00043712 0.000230404 0.000228896" />
+          <inertial pos="0.00017762 0.0099965 -0.00010174" quat="0.706853 0.0171001 0.0170535 0.706948" mass="0.218" diaginertia="0.00043712 0.000230404 0.000228896" />
           <joint name="Left_Wheel_joint" pos="0 0 0" axis="0 -1 0" damping="0.01"/>
           <geom type="mesh" rgba="0.79216 0.81961 0.93333 1" mesh="Left_Wheel_link"
                 conaffinity="1" condim="3" friction="0.8 0.1 0.1"/>

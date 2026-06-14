@@ -167,9 +167,9 @@ def init_model(xml_path):
                 "dof":  model.jnt_dofadr[jid],
             }
 
-    # freejoint qpos 起始地址 (用于读 pitch)
+    # freejoint qpos 起始地址 (用于读 pitch)；若不存在则返回 -1（机体被固定）
     freejoint_id = _id(mj.mjtObj.mjOBJ_JOINT, "base_freejoint")
-    freejoint_adr = model.jnt_qposadr[freejoint_id]
+    freejoint_adr = model.jnt_qposadr[freejoint_id] if freejoint_id >= 0 else -1
 
     # 轮子 body ID (用于离地检测)
     wheel_body = {
@@ -186,18 +186,18 @@ def init_model(xml_path):
 # 行 1~6  → 轮子力矩 T_wheel, 行 7~12 → 虚拟腿力矩 T_Leg
 
 K_CONS = np.array([
-    [ 45.778283,  -45.778071,   -9.396343],   # K1  theta     → T_wheel
-    [  1.756041,   -2.338764,   -0.550447],   # K2  theta_dot → T_wheel
-    [ 10.523162,   -8.954049,   -2.780402],   # K3  x         → T_wheel
-    [ 10.678620,   -9.305726,   -3.198268],   # K4  x_dot     → T_wheel
-    [ 69.592610,  -70.679983,   23.123773],   # K5  pitch     → T_wheel
-    [  5.831394,   -6.022073,    2.078401],   # K6  pitch_dot → T_wheel
-    [ 31.186652,  -37.751178,   14.599865],   # K7  theta     → T_Leg
-    [  3.619870,   -3.816698,    1.346905],   # K8  theta_dot → T_Leg
-    [ 20.883169,  -22.162118,    7.687936],   # K9  x         → T_Leg
-    [ 23.518776,  -24.661049,    8.447341],   # K10 x_dot     → T_Leg
-    [-80.560280,   67.814941,   38.985001],   # K11 pitch     → T_Leg
-    [ -5.929814,    5.034073,    2.692640],   # K12 pitch_dot → T_Leg
+    [ 54.589897,  -56.774632,   -4.150301],   # K1  theta     → T_wheel
+    [  4.222997,   -4.594442,   -0.254409],   # K2  theta_dot → T_wheel
+    [ 11.122412,  -10.479912,   -0.722340],   # K3  x         → T_wheel
+    [ 10.758636,  -10.157735,   -1.023608],   # K4  x_dot     → T_wheel
+    [ 44.278507,  -62.256189,   30.083478],   # K5  pitch     → T_wheel
+    [  4.452748,   -5.686823,    2.836748],   # K6  pitch_dot → T_wheel
+    [-44.003860,   -3.159813,   29.519786],   # K7  theta     → T_Leg
+    [  1.615195,   -6.185183,    4.362060],   # K8  theta_dot → T_Leg
+    [  2.806740,  -15.396429,   11.331555],   # K9  x         → T_Leg
+    [  8.538473,  -20.667805,   12.704652],   # K10 x_dot     → T_Leg
+    [-265.890204, 254.553842,   31.713040],   # K11 pitch     → T_Leg
+    [ -18.249953,  18.302743,    1.560141],   # K12 pitch_dot → T_Leg
 ])
 
 
